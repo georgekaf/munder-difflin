@@ -23,6 +23,7 @@ import { resolveGodName } from '../../../shared/godIdentity';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
 import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
+import { QUIESCE_IDLE_MS, shouldQuiesce } from '../../../shared/quiesce';
 
 const GOD_ID = 'god';
 /** Accent palette for MAIN-spawned (voice-hired) agents — picked deterministically
@@ -40,7 +41,8 @@ const REMOTE_CONTROL_SETTLE_MS = 1500;
 // flipped idle. A streaming turn (incl. a long tool) keeps emitting bytes → stays
 // working; only true silence drifts it idle. Hook events still win — a fresh
 // PreToolUse/Stop refreshes status on the next event. Checked on QUIESCE_POLL_MS.
-const QUIESCE_IDLE_MS = 12000;
+// An agent whose hook events are newer than its PTY output is driven from outside its
+// terminal and is held instead (shared/quiesce.ts).
 const QUIESCE_POLL_MS = 4000;
 // After a god/agent spawn, hold off the inbox-wake + queue-drain typers for this
 // long while the readiness handshake + provider-specific boot sequence runs.
@@ -338,6 +340,8 @@ export function useHive(config: HarnessConfig | null): void {
   // listPtys on exactly the cadence the drain needs, and one reading keeps the
   // two loops from disagreeing about whether an agent is quiet.
   const ptyLastOutput = useRef<Record<string, number>>({});
+  // When each agent's last hook event arrived; #2e holds an agent whose events outrun its PTY.
+  const lastHookAt = useRef<Record<string, number>>({});
     /** How long this terminal has been silent, or null when we have no reading
    *  (never polled, PTY gone, or it has emitted nothing at all). canDeliverToAgent
    *  fails closed on null — unmeasured silence is not evidence of silence.
@@ -481,6 +485,7 @@ export function useHive(config: HarnessConfig | null): void {
       const { updateAgent, agents } = useStore.getState();
       const self = agents.find((a) => a.id === e.agentId);
       if (!self) return;
+      lastHookAt.current[e.agentId] = Date.now();
       // Breaker precedence (#5C): a constrained/stopped agent stays 'looping'
       // regardless of in-flight tool/prompt/compact events.
       const blevel = breakerLevel.current[e.agentId];
@@ -666,8 +671,7 @@ export function useHive(config: HarnessConfig | null): void {
         const bl = breakerLevel.current[a.id];
         if (bl === 'constrained' || bl === 'stopped') continue;
         if ((bootGraceUntil.current[a.id] ?? 0) > now) continue;
-        const last = lastOut[a.ptyId];
-        if (typeof last === 'number' && last > 0 && now - last > QUIESCE_IDLE_MS) {
+        if (shouldQuiesce(now, lastOut[a.ptyId], lastHookAt.current[a.id])) {
           updateAgent(a.id, { status: 'idle', action: 'idle', carrying: undefined });
         }
       }
