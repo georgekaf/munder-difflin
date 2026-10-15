@@ -235,6 +235,10 @@ export function OfficeFloor() {
     appRef.current = app;
 
     const runtimes = new Map<string, Runtime>();
+    // Agents whose Character is still loading. Without it every store change during that await
+    // starts another Character (a team restore adds agents one by one in the same tick): only
+    // the last lands in `runtimes`, the rest sit on the floor forever, never driven, never removed.
+    const adding = new Set<string>();
     const seatClaims = new Set<number>();
     // In-flight message envelopes (sender desk → recipient desk). Capped so a
     // broadcast doesn't bury the floor in paper.
@@ -1378,6 +1382,7 @@ export function OfficeFloor() {
       (app as any).__taskBoardPoll = taskBoardPoll;
 
       const addCharacter = async (agent: Agent) => {
+        adding.add(agent.id);
         const charName = theme.cast.byName[agent.character] ? agent.character : theme.cast.defaultCharacter;
         const member = theme.cast.byName[charName];
         const seatIndex = claimSeat(agent);
@@ -1385,10 +1390,11 @@ export function OfficeFloor() {
           ?? mapRenderer.getSpawnPoint('entrance')
           ?? { x: 2, y: 2 };
         const waitTile = waitTiles[(seatIndex ?? 0) % waitTiles.length];
-        const frames = await theme.cast.getFrames(charName);
+        const frames = await theme.cast.getFrames(charName).finally(() => adding.delete(agent.id));
         // Bail if the agent was removed (or scene torn down) while loading.
         if (mountIdRef.current !== mountId) return;
-        if (!useStore.getState().agents.some((a) => a.id === agent.id)) {
+        const live = useStore.getState().agents.find((a) => a.id === agent.id);
+        if (!live) {
           if (seatIndex != null) seatClaims.delete(seatIndex);
           return;
         }
@@ -1418,7 +1424,7 @@ export function OfficeFloor() {
           character.setCupSpot({ x: top.x * ts2 + 18, y: top.y * ts2 + 23 });
         }
         runtimes.set(agent.id, rt);
-        applyState(agent, rt, true);
+        applyState(live, rt, true); // the store may have moved on while the frames loaded
       };
 
       const removeCharacter = (id: string) => {
@@ -1580,7 +1586,7 @@ export function OfficeFloor() {
         }
         for (const agent of agents) {
           const rt = runtimes.get(agent.id);
-          if (!rt) void addCharacter(agent);
+          if (!rt) { if (!adding.has(agent.id)) void addCharacter(agent); }
           else {
             rt.character.setName(agent.name);
             applyState(agent, rt);
