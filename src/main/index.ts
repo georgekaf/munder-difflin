@@ -3019,7 +3019,32 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
   if (provider === 'codex' && opts.hive?.id) {
     await enableCodexRemoteForSpawn(opts, opts.hive.id);
   }
-  const res = ptyManager.spawn(opts, owner);
+  // Claude Code on a local model: llama-server and Ollama speak the Anthropic API, so a
+  // `--model local/<id>` routes THIS agent to the Claude base URL from Settings →
+  // Agents & Models (same convention as OpenCode's `local/<id>`). Every other Claude
+  // agent, god included, keeps the user's own login. No base URL → the spawn fails
+  // instead of handing `local/<id>` to Anthropic.
+  let localModelError: string | undefined;
+  if (claudeProvider) {
+    const args = opts.args ?? [];
+    const i = args.indexOf('--model');
+    const baseUrl = readConfig().providerBaseUrls?.claude;
+    if (i >= 0 && /^local\//i.test(args[i + 1] ?? '') && !baseUrl) {
+      localModelError = `Model ${args[i + 1]} needs the "Claude Code (local model)" base URL (Settings → Agents & Models).`;
+    } else if (baseUrl && i >= 0 && /^local\//i.test(args[i + 1] ?? '')) {
+      const id = args[i + 1].slice('local/'.length);
+      args[i + 1] = id;
+      opts.args = args;
+      opts.env = {
+        ...(opts.env ?? {}),
+        ANTHROPIC_BASE_URL: baseUrl,
+        ANTHROPIC_AUTH_TOKEN: 'local',
+        ANTHROPIC_MODEL: id,
+        ANTHROPIC_SMALL_FAST_MODEL: id
+      };
+    }
+  }
+  const res = localModelError ? { ok: false, error: localModelError } : ptyManager.spawn(opts, owner);
   if (res.ok) analytics.track('agent_spawned', { provider });
   else analytics.track('agent_spawn_failed', { provider, reason: spawnFailReason(res.error) });
   syncKeepAwake(); // arm the power-save blocker while ≥1 agent PTY is alive (#18)

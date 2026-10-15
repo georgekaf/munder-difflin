@@ -30,6 +30,7 @@ const BACKENDS: Array<{ id: string; label: string; envVar: string }> = [
 /** CLI engines that take a per-provider local base-URL + default model. `hint`
  *  values are technical endpoint descriptions — kept English (technical data). */
 const CLIS: Array<{ id: AgentProvider; label: string; hint: string }> = [
+  { id: 'claude', label: 'Claude Code (local model)', hint: 'http://127.0.0.1:8080 (llama-server / Ollama, Anthropic API) — used by agents whose model is local/<id>' },
   { id: 'opencode', label: 'OpenCode', hint: 'http://localhost:11434/v1 (Ollama) — injected as a local provider' },
   { id: 'crush', label: 'Crush', hint: 'OpenAI-compatible endpoint — used as the proxy upstream' },
   { id: 'pi', label: 'Pi', hint: 'local models are file-based (models.json); base-URL reserved' },
