@@ -4,9 +4,33 @@
   <subtitle>Guides, deep dives, and comparisons on running multi-agent Claude Code: orchestration, agent memory, automation, and the tooling landscape.</subtitle>
   <link href="https://munderdiffl.in/blog/feed.xml" rel="self" />
   <link href="https://munderdiffl.in/blog/" />
-  <updated>2026-10-13T00:00:00.000Z</updated>
+  <updated>2026-10-15T00:00:00.000Z</updated>
   <id>https://munderdiffl.in/blog/</id>
   <author><name>Chaitanya Giri</name><uri>https://munderdiffl.in</uri></author>
+  <entry>
+    <title>Agent Tools Today, 15 Oct 2026: OpenCode 2.0, Hermes Agent v0.22.0, a Lost TV Season</title>
+    <link href="https://munderdiffl.in/blog/agent-tools-today-2026-10-15/" />
+    <id>https://munderdiffl.in/blog/agent-tools-today-2026-10-15/</id>
+    <published>2026-10-15T00:00:00.000Z</published>
+    <updated>2026-10-15T00:00:00.000Z</updated><category term="News" />
+    <summary>The top launches, skills and MCP servers, multi agent moves, rising repos and arguments in coding agents on 15 Oct 2026, each with its source.</summary>
+  </entry>
+  <entry>
+    <title>OpenCode 2.0: what changed and how to upgrade</title>
+    <link href="https://munderdiffl.in/blog/opencode-2-0/" />
+    <id>https://munderdiffl.in/blog/opencode-2-0/</id>
+    <published>2026-10-15T00:00:00.000Z</published>
+    <updated>2026-10-15T00:00:00.000Z</updated><category term="Concepts" />
+    <summary>OpenCode 2.0 from Anomaly: the background service, Code Mode, background subagents, the new plugin API and SDK, and how to upgrade. Checked 15 Oct 2026.</summary>
+  </entry>
+  <entry>
+    <title>Muse Code vs Claude Code: Plans, Prices, Models and Where They Run</title>
+    <link href="https://munderdiffl.in/blog/muse-code-vs-claude-code/" />
+    <id>https://munderdiffl.in/blog/muse-code-vs-claude-code/</id>
+    <published>2026-10-14T00:00:00.000Z</published>
+    <updated>2026-10-14T00:00:00.000Z</updated><category term="Comparisons" />
+    <summary>Muse Code vs Claude Code, checked 14 Oct 2026: the main plans and monthly prices, the models each runs, where each installs, and which one to pick.</summary>
+  </entry>
   <entry>
     <title>Agent Tools Today, 13 Oct 2026: Muse Wonder, GLM-Legal, the Codex Daemon Issue</title>
     <link href="https://munderdiffl.in/blog/agent-tools-today-2026-10-13/" />
@@ -462,29 +486,5 @@
     <published>2026-09-25T00:00:00.000Z</published>
     <updated>2026-09-25T00:00:00.000Z</updated><category term="Comparisons" />
     <summary>Ten open source AI projects from Indian developers, each lined up against the big tech product it takes on. Laya vs Jev, Munder Difflin vs Muse and Grok Bot.</summary>
-  </entry>
-  <entry>
-    <title>Aider vs Claude Code in 2026: Which Should You Use?</title>
-    <link href="https://munderdiffl.in/blog/aider-vs-claude-code/" />
-    <id>https://munderdiffl.in/blog/aider-vs-claude-code/</id>
-    <published>2026-09-15T00:00:00.000Z</published>
-    <updated>2026-09-15T00:00:00.000Z</updated><category term="Comparisons" />
-    <summary>Aider vs Claude Code, checked 15 Sep 2026: how each edits code, which models it runs, what it costs, MCP, and Aider&#39;s stalled releases.</summary>
-  </entry>
-  <entry>
-    <title>Build Your Personal AGI on Your Computer Using Claude Code and Munder Difflin</title>
-    <link href="https://munderdiffl.in/blog/build-your-personal-agi-on-your-computer/" />
-    <id>https://munderdiffl.in/blog/build-your-personal-agi-on-your-computer/</id>
-    <published>2026-09-15T00:00:00.000Z</published>
-    <updated>2026-09-15T00:00:00.000Z</updated><category term="Guides" />
-    <summary>Turn Claude Code into a personal AGI on your own computer: agents with memory, schedules, Gmail, Calendar, voice and Slack, set up in Munder Difflin 0.5.2.</summary>
-  </entry>
-  <entry>
-    <title>How to Install Gemini CLI, and Can It Use Gemini 4 Yet?</title>
-    <link href="https://munderdiffl.in/blog/how-to-install-gemini-cli/" />
-    <id>https://munderdiffl.in/blog/how-to-install-gemini-cli/</id>
-    <published>2026-09-15T00:00:00.000Z</published>
-    <updated>2026-10-02T00:00:00.000Z</updated><category term="Guides" />
-    <summary>Install Gemini CLI 0.62.0 with one npm command, see which sign ins still work after 18 Jun 2026, and why Gemini 4 Argon isn&#39;t in it yet.</summary>
   </entry>
 </feed>
