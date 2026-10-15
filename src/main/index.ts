@@ -3341,6 +3341,7 @@ ipcMain.handle('config:changeHome', async (_evt, payload: unknown) => {
 
   // Repoint config and relaunch so every service re-bootstraps against newHome.
   // (Identical recovery path to resetAll — relaunch is the clean re-bind.)
+  logQuit('relaunch-change-home');
   allowQuit = true;
   writeConfig({ harnessHome: newHome });
   try { ptyManager.killAll(); } catch (e) { console.error('[changeHome] killAll:', e); }
@@ -3796,9 +3797,20 @@ ipcMain.handle('history:search', (_evt, query: unknown, limit: unknown) =>
   persist.searchHistory(typeof query === 'string' ? query : '', typeof limit === 'number' ? limit : undefined));
 
 // ─── IPC: quit confirmation ─────────────────────────────────────────────────
+/** The counterpart of app-start: one line naming the path that ended the app.
+ *  2026-10-15 the app went down in an orderly teardown with three agents mid-run,
+ *  and nothing recorded which path fired. First caller wins. */
+let quitLogged = false;
+function logQuit(reason: string): void {
+  if (quitLogged) return;
+  quitLogged = true;
+  try { hive.appendLog({ kind: 'app-quit', reason, ptys: ptyManager.list().length }); } catch { /* best-effort */ }
+}
+
 /** Tear the harness down and quit. Shared by the hard "kill all & quit" path
  *  and the closing-time conclusion (after the god confirmed the floor saved). */
-function teardownAndQuit(): void {
+function teardownAndQuit(reason: string): void {
+  logQuit(reason);
   allowQuit = true;
   // Each teardown step is best-effort: a throw here (e.g. a dying child or a
   // half-torn-down socket) must never abort the quit or pop a crash dialog.
@@ -3821,7 +3833,7 @@ function teardownAndQuit(): void {
 }
 ipcMain.handle('app:confirmClose', () => {
   closingTime.cancel(); // a hard quit overrides a closing time in progress
-  teardownAndQuit();
+  teardownAndQuit('quit-dialog');
 });
 ipcMain.handle('app:cancelClose', () => {
   // The modal closes on the renderer side. The one thing main owes anybody here
@@ -3850,7 +3862,7 @@ const closingTime = new ClosingTimeController(
   // sessions that ended with a hard quit — never archived, never able to ACK.
   () => [...new Set(ptyToAgent.values())],
   () => liveWebContents(),
-  () => teardownAndQuit(),
+  () => teardownAndQuit('closing-time'),
   // #7C.2 steering — the graceful interrupt that reaches deeply busy agents
   // at their next hook boundary instead of waiting for a Stop.
   control
@@ -5508,7 +5520,7 @@ app.on('window-all-closed', () => {
     // Full teardown, not a bare killAll: this path must also stop the proxy
     // sidecars and helper servers — on Windows a child is NOT killed when its
     // parent exits, so anything skipped here outlives the app.
-    teardownAndQuit();
+    teardownAndQuit('window-all-closed');
   }
 });
 
@@ -5528,6 +5540,7 @@ app.on('window-all-closed', () => {
 // exactly what's left to do.
 let analyticsFlushed = false;
 app.on('will-quit', (e) => {
+  logQuit('will-quit'); // only lands when no teardown logged first: updater, OS
   if (analyticsFlushed) return;
   analyticsFlushed = true;
   e.preventDefault();
