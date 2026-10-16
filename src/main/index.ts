@@ -5524,6 +5524,17 @@ app.on('window-all-closed', () => {
   }
 });
 
+// 2026-10-16 00:48:59 the app died a second time with no reason on record. Two
+// more ways out: a console event (electron attaches to the dev console, so a
+// Ctrl+C or close there reaches it) and an exit no teardown preceded. No
+// app-quit line at all after this means the process was killed outright.
+process.once('SIGINT', () => teardownAndQuit('signal-sigint'));
+process.once('SIGBREAK', () => teardownAndQuit('signal-sigbreak'));
+process.once('SIGHUP', () => teardownAndQuit('signal-sighup'));
+process.on('exit', (code) => logQuit(`exit-${code}`));
+app.on('render-process-gone', (_e, _wc, d) => hive.appendLog({ kind: 'render-process-gone', reason: d.reason, exitCode: d.exitCode }));
+app.on('child-process-gone', (_e, d) => hive.appendLog({ kind: 'child-process-gone', type: d.type, reason: d.reason, exitCode: d.exitCode }));
+
 // Final analytics flush (session_ended + drain the send queue), bounded so a
 // hung network can never wedge quit: preventDefault ONCE, race the flush
 // against a short timeout, then exit hard.

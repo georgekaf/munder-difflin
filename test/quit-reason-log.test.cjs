@@ -45,6 +45,20 @@ test('will-quit catches a quit no teardown logged (updater, OS)', () => {
   assert.match(src.slice(start, start + 400), /logQuit\('/);
 });
 
+// 2026-10-16 00:48:59 the app died again, outside every path above. A console event reaching the
+// dev console electron attaches to, or a dying child process, must name itself too.
+test('console signals quit through teardown with a reason', () => {
+  for (const sig of ['SIGINT', 'SIGBREAK', 'SIGHUP']) {
+    assert.ok(src.includes(`process.once('${sig}', () => teardownAndQuit('signal-${sig.toLowerCase()}'));`), `${sig} needs a handler`);
+  }
+});
+
+test('a process exit and a gone child or renderer leave a line', () => {
+  assert.match(src, /process\.on\('exit', \(code\) => logQuit\(`exit-\$\{code\}`\)\)/);
+  assert.match(src, /app\.on\('render-process-gone'[^\n]*appendLog\(\{ kind: 'render-process-gone'/);
+  assert.match(src, /app\.on\('child-process-gone'[^\n]*appendLog\(\{ kind: 'child-process-gone'/);
+});
+
 test('the change-home relaunch logs before it exits', () => {
   const start = src.indexOf('// Repoint config and relaunch');
   assert.ok(start >= 0);
